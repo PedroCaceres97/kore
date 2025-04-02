@@ -75,16 +75,9 @@ u8 linux_terminate() {
 }
 
 void linux_kignore() {
-#if defined(KORE_USE_STD) || defined(KORE_SYS_USE_STD)
-    char c = getchar();
-    while(c != '\n' && c != EOF) {
-        c = getchar();
-    }
-#else
     char c;
     linux_kread(&c, 1);
     tcflush(STDIN_FILENO, TCIFLUSH);
-#endif
 }
 void linux_kread(char* buffer, size_t count) {
     read(STDIN_FILENO, buffer, count);

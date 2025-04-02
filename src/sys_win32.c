@@ -109,38 +109,21 @@ u8 win32_terminate() {
 }
 
 void win32_kignore() {
-#if defined(KORE_USE_STD) || defined(KORE_SYS_USE_STD)
-    char c = getc();
-    while(c != '\n' && c != EOF) {
-        c = getc();
-    }
-#else
     char c;
     win32_kread(&c, 1);
     FlushConsoleInputBuffer(handle_stdin);
-#endif
 }
 void win32_kread(char* buffer, size_t count) {
     DWORD readed;
     ReadFile(handle_stdin, buffer, count, &readed, NULL);
 }
 void win32_kwrite(const char* buffer, size_t count) {
-#if defined(KORE_USE_STD) || defined(KORE_SYS_USE_STD)
-    const char temp[count] = {0};
-    snprintf(temp, count, "%s", buffer);
-    fprintf(stdout, temp);
-#else
     DWORD writen; 
     WriteFile(handle_stdout, buffer, count, &writen, NULL);
-#endif
 }
 void win32_kerror(const char* buffer) {
-#if defined(KORE_USE_STD) || defined(KORE_SYS_USE_STD)
-    fprintf(stderr, buffer);
-#else
     DWORD writen; 
     WriteFile(handle_stderr, buffer, __sys_strlen__(buffer), &writen, NULL);
-#endif
 }
 
 u8 win32_kore_is_dir(const char* path) {
@@ -157,7 +140,8 @@ u8 win32_kore_is_file(const char* path, const char* file) {
     }
     
     const u16 sizepath = 512;
-    char buffer[sizepath] = {0};
+    char buffer[sizepath];
+    __sys_memzro__(buffer, sizepath);
 
     if (!(*path)) {
         snprintf(buffer, sizepath, "./*.*");

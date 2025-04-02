@@ -1,5 +1,4 @@
 include makefiles/compiler.mk
-include makefiles/files.mk
 
 binary := $(PATH_BIN)libkore.a
 files := $(OBJ_FILES_SRC) $(OBJ_FILES_$(arch)_$(sys))

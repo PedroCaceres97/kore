@@ -7,6 +7,7 @@
 #ifdef KORE_SYS_USE_STD
 
 #include <string.h>
+#define __sys_memzro__(dst, count) memset(dst, 0, count)
 #define __sys_strlen__(string) strlen(string)
 #define __sys_strdup__(string) strdup(string)
 #define __sys_strcmp__(src, dst) strcmp(src, dst) == 0
@@ -14,6 +15,7 @@
 #else
 
 #include <kore/string.h>
+#define __sys_memzro__(dst, count) kmemzro(dst, count)
 #define __sys_strlen__(string) kstrlen(string)
 #define __sys_strdup__(string) kstrdup(string)
 #define __sys_strcmp__(src, dst) kstrcmp(src, dst)

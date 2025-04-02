@@ -1,4 +1,4 @@
-sys := LINUX
+sys := WINDOWS
 arch := X86_64
 mode := release
 
