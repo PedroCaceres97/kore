@@ -2,12 +2,12 @@
 ; Microsoft x64 Calling Convention
 
 section .text
-global asm_kstrcpy
+global kstrcpy
 
-; rax = (return)    void
-; rcx = (1st)       char*           dst
-; rdx = (2nd)       const char*     src
-asm_kstrcpy:
+; rax = (return) void
+; rcx =    (1st) const char*    dst
+; rdx =    (2nd) const char*    src
+kstrcpy:
     push    r12
     push    r13
     mov     r12, 0x0101010101010101

@@ -2,31 +2,41 @@
 ; Microsoft x64 Calling Convention
 
 section .text
-global asm_kstrcmp
+global kstrncmp
 
-; rax = (return)    bool
-; rcx = (1st)       const char*     src
-; rdx = (2nd)       const char*     dst
-asm_kstrcmp:
+; rax = bool
+; rcx = const char* src
+; rdx = const char* dst
+; r8  = size_t count
+kstrncmp:
     push    r12
     push    r13
     mov     r12, 0x0101010101010101
     mov     r13, 0x8080808080808080
 
-    mov     r10, rcx         
-    mov     r11, rdx         
-    and     r10, 7           
-    and     r11, 7           
-    cmp     r10, r11      
+    test    r8, r8
+    jz      .equal
+
+    cmp     r8, 8
+    jb      .unaligned_compare
+
+    mov     r10, [rcx]
+    mov     r11, [rdx]
+    and     r10, 7
+    and     r11, 7
+    cmp     r10, r11
     je      .align
 
 .unaligned_compare:
-    mov     r10, [rcx]
-    mov     r11, [rdx]
-    cmp     r10, r11
+    mov     r10b, [rcx]
+    mov     r11b, [rdx]
+    cmp     r10b, r11b
     jne     .nequal
 
-    test    r10, r10
+    test    r10b, r10b
+    jz      .equal
+
+    dec     r8
     jz      .equal
 
     inc     rcx
@@ -37,12 +47,15 @@ asm_kstrcmp:
     test    rcx, 7
     jz      .aligned_compare
 
-    mov     r10, [rcx]
-    mov     r11, [rdx]
-    cmp     r10, r11
+    mov     r10b, [rcx]
+    mov     r11b, [rdx]
+    cmp     r10b, r11b
     jne     .nequal
 
-    test    r10, r10
+    test    r10b, r10b
+    jz      .equal
+
+    dec     r8
     jz      .equal
 
     inc     rcx
@@ -73,14 +86,19 @@ asm_kstrcmp:
 
     add     rcx, 8
     add     rdx, 8
+    sub     r8, 8
+    jz      .equal
+
+    cmp     r8, 8
+    jb      .unaligned_compare
     jmp     .aligned_compare
 
 .equal:
-    mov     rax, 1
+    mov     eax, 1
     jmp     .done
 
 .nequal:
-    mov     rax, 0
+    mov     eax, 0
 
 .done:
     pop r13

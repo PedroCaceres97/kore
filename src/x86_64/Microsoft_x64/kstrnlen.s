@@ -2,13 +2,13 @@
 ; Microsoft x64 Calling Convention
 
 section .text
-global kstrnlen
+global asm_kstrnlen
 
-; rax = (return) size_t
-; rcx =    (1st) const char*    src
-; rdx =    (2nd) size_t         count
+; rax = (return)    size_t
+; rcx = (1st)       const char*     src
+; rdx = (2nd)       size_t          count
 
-kstrnlen:        
+asm_kstrnlen:        
     push    r12
     push    r13
     mov     r12, 0x0101010101010101

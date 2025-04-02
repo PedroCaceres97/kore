@@ -1,8 +1,7 @@
 #include <kore/kore.h>
-#include <kore/sys_null.h>
+#include "kore_sys.h"
 
-#include <stdio.h>
-
+void    (*kread)(char* buffer, size_t count)                    = null_kread;
 void    (*kignore)()                                            = null_kignore;
 void    (*kwrite)(const char* buffer, size_t count)             = null_kwrite;
 void    (*kerror)(const char* buffer)                           = null_kerror;
@@ -22,6 +21,9 @@ static void report(const char* function) {
     fprintf(stderr, "(null system report)\n[KORE]: Calling %s wihtout initializing first\n", function);
 }
 
+void null_kread(char* buffer, size_t count) {
+    report("kread");
+}
 void null_kignore() {
     report("kignore");
 }

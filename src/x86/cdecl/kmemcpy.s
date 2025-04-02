@@ -2,13 +2,13 @@
 ; Microsoft x64 Calling Convention
 
 section .text
-global asm_kmemcpy
+global kmemcpy
 
-; rax = (return)    void
-; rcx = (1st)       char*           dst
-; rdx = (2nd)       const char*     src
-; r8  = (3rd)       size_t          count
-asm_kmemcpy:
+; rax = (return) void
+; rcx =    (1st) const char*    dst
+; rdx =    (2nd) const char*    src
+; r8  =    (3rd) size_t         count
+kmemcpy:
     test    r8, r8
     jz      .done
 

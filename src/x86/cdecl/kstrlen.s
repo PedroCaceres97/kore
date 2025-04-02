@@ -1,61 +1,54 @@
-; Architecture: x86
-; cdecl Convention
+; Architecture: x86_64
+; Microsoft x64 Calling Convention
 
 section .text
 global kstrlen
 
-kstrlen:
-    mov     edx, [esp + 4]
-    push    edi
-    push    esi
-    mov     edi, edx
-    xor     edx, edx            
-    xor     eax, eax            
+; rax = (return) size_t
+; rcx =    (1st) const char*    src
 
-.align_loop:
-    mov     esi, edi            
-    add     esi, eax            
-    test    esi, 3              
-    jz      .loop               
+kstrlen:        
+    push    r12
+    push    r13
+    mov     r12, 0x0101010101010101
+    mov     r13, 0x8080808080808080
+    
+    mov     rax, rcx
 
-    mov     dl, [esi]           
-    test    dl, dl              
-    jz      .done               
-    inc     eax                 
-    jmp     .align_loop
+.align:
+    test    rcx, 7              
+    jz      .aligned_loop               
 
-.loop:
-    mov     esi, edi            
-    add     esi, eax            
-    mov     edx, [esi]          
-    mov     ecx, edx            
+    mov     r10b, [rcx]           
+    test    r10b, r10b              
+    jz      .done
 
-    sub     ecx, 0x01010101     
-    not     edx                 
-    and     edx, ecx            
-    and     edx, 0x80808080     
-    jnz     .byte_search        
+    inc     rcx
+    jmp     .align
 
-    add     eax, 4              
-    jmp     .loop
+.aligned_loop:
+    mov     r10, [rcx]             
+    mov     r11, r10 
+    sub     r11, r12
+    not     r10                    
+    and     r10, r11                
+    and     r10, r13
+    jnz     .unaligned_loop
 
-.byte_search:
-    xor     edx, edx            
+    add     rcx, 8
+    jmp     .aligned_loop
 
-.byte_loop:
-    mov     esi, edi            
-    add     esi, eax            
-    mov     dl, [esi + edx]     
-    test    dl, dl              
-    jz      .byte_end           
-    inc     edx                 
-    cmp     edx, 4              
-    jne     .byte_loop
+.unaligned_loop:
+    mov     r10b, [rcx]
+    test    r10b, r10b        
+    jz      .done
 
-.byte_end:
-    add     eax, edx            
+    inc     rcx      
+    jmp     .unaligned_loop
 
 .done:
-    pop esi
-    pop edi
+    pop r13
+    pop r12
+    sub     rcx, rax
+    mov     rax, rcx
     ret

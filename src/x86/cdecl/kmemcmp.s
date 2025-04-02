@@ -2,26 +2,21 @@
 ; Microsoft x64 Calling Convention
 
 section .text
-global asm_kstrncmp
+global kmemcmp
 
-; rax = (return)    bool
-; rcx = (1st)       const char*     src
-; rdx = (2nd)       const char*     dst
-; r8  = (3rd)       size_t          count
-asm_kstrncmp:
-    push    r12
-    push    r13
-    mov     r12, 0x0101010101010101
-    mov     r13, 0x8080808080808080
-
-    test    r8, r8
-    jz      .equal
+; rax = (return) bool
+; rcx =    (1st) const char*    src
+; rdx =    (2nd) const char*    dst
+; r8  =    (3rd) size_t         count
+kmemcmp:
+    cmp     r8, 0
+    je      .equal
 
     cmp     r8, 8
     jb      .unaligned_compare
 
-    mov     r10, [rcx]
-    mov     r11, [rdx]
+    mov     r10, rcx
+    mov     r11, rdx
     and     r10, 7
     and     r11, 7
     cmp     r10, r11
@@ -32,9 +27,6 @@ asm_kstrncmp:
     mov     r11b, [rdx]
     cmp     r10b, r11b
     jne     .nequal
-
-    test    r10b, r10b
-    jz      .equal
 
     dec     r8
     jz      .equal
@@ -52,9 +44,6 @@ asm_kstrncmp:
     cmp     r10b, r11b
     jne     .nequal
 
-    test    r10b, r10b
-    jz      .equal
-
     dec     r8
     jz      .equal
 
@@ -63,22 +52,6 @@ asm_kstrncmp:
     jmp     .align
 
 .aligned_compare:
-    mov     r10, [rcx]             
-    mov     r11, r10
-    sub     r11, r12
-    not     r10                    
-    and     r10, r11                
-    and     r10, r13
-    jnz     .unaligned_compare
-
-    mov     r10, [rdx]             
-    mov     r11, r10
-    sub     r11, r12
-    not     r10                    
-    and     r10, r11                
-    and     r10, r13
-    jnz     .unaligned_compare
-
     mov     r10, [rcx]
     mov     r11, [rdx]
     cmp     r10, r11
@@ -93,14 +66,10 @@ asm_kstrncmp:
     jb      .unaligned_compare
     jmp     .aligned_compare
 
-.equal:
-    mov     rax, 1
-    jmp     .done
-
 .nequal:
     mov     rax, 0
+    ret
 
-.done:
-    pop r13
-    pop r12
+.equal:
+    mov     rax, 1
     ret

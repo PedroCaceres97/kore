@@ -2,3 +2,4 @@ bin/
 doc/
 
 .clangd
+log.txt

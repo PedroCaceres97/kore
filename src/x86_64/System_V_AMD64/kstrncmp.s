@@ -1,69 +1,69 @@
 ; Architecture: x86_64
-; Microsoft x64 Calling Convention
+; System V AMD64 Calling Convention
 
 section .text
 global asm_kstrncmp
 
 ; rax = (return)    bool
-; rcx = (1st)       const char*     src
-; rdx = (2nd)       const char*     dst
-; r8  = (3rd)       size_t          count
+; rdi = (1st)       const char*     src
+; rsi = (2nd)       const char*     dst
+; rdx  = (3rd)       size_t          count
 asm_kstrncmp:
     push    r12
     push    r13
     mov     r12, 0x0101010101010101
     mov     r13, 0x8080808080808080
 
-    test    r8, r8
+    test    rdx, rdx
     jz      .equal
 
-    cmp     r8, 8
+    cmp     rdx, 8
     jb      .unaligned_compare
 
-    mov     r10, [rcx]
-    mov     r11, [rdx]
+    mov     r10, [rdi]
+    mov     r11, [rsi]
     and     r10, 7
     and     r11, 7
     cmp     r10, r11
     je      .align
 
 .unaligned_compare:
-    mov     r10b, [rcx]
-    mov     r11b, [rdx]
+    mov     r10b, [rdi]
+    mov     r11b, [rsi]
     cmp     r10b, r11b
     jne     .nequal
 
     test    r10b, r10b
     jz      .equal
 
-    dec     r8
+    dec     rdx
     jz      .equal
 
-    inc     rcx
-    inc     rdx
+    inc     rdi
+    inc     rsi
     jmp     .unaligned_compare
 
 .align:
-    test    rcx, 7
+    test    rdi, 7
     jz      .aligned_compare
 
-    mov     r10b, [rcx]
-    mov     r11b, [rdx]
+    mov     r10b, [rdi]
+    mov     r11b, [rsi]
     cmp     r10b, r11b
     jne     .nequal
 
     test    r10b, r10b
     jz      .equal
 
-    dec     r8
+    dec     rdx
     jz      .equal
 
-    inc     rcx
-    inc     rdx
+    inc     rdi
+    inc     rsi
     jmp     .align
 
 .aligned_compare:
-    mov     r10, [rcx]             
+    mov     r10, [rdi]             
     mov     r11, r10
     sub     r11, r12
     not     r10                    
@@ -71,7 +71,7 @@ asm_kstrncmp:
     and     r10, r13
     jnz     .unaligned_compare
 
-    mov     r10, [rdx]             
+    mov     r10, [rsi]             
     mov     r11, r10
     sub     r11, r12
     not     r10                    
@@ -79,17 +79,17 @@ asm_kstrncmp:
     and     r10, r13
     jnz     .unaligned_compare
 
-    mov     r10, [rcx]
-    mov     r11, [rdx]
+    mov     r10, [rdi]
+    mov     r11, [rsi]
     cmp     r10, r11
     jne     .nequal
 
-    add     rcx, 8
-    add     rdx, 8
-    sub     r8, 8
+    add     rdi, 8
+    add     rsi, 8
+    sub     rdx, 8
     jz      .equal
 
-    cmp     r8, 8
+    cmp     rdx, 8
     jb      .unaligned_compare
     jmp     .aligned_compare
 

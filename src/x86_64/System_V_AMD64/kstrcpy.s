@@ -1,60 +1,60 @@
 ; Architecture: x86_64
-; Microsoft x64 Calling Convention
+; System V AMD64 Calling Convention
 
 section .text
 global asm_kstrcpy
 
 ; rax = (return)    void
-; rcx = (1st)       char*           dst
-; rdx = (2nd)       const char*     src
+; rdi = (1st)       char*           dst
+; rsi = (2nd)       const char*     src
 asm_kstrcpy:
     push    r12
     push    r13
     mov     r12, 0x0101010101010101
     mov     r13, 0x8080808080808080
 
-    mov     r10, rcx
-    mov     r11, rdx
+    mov     r10, rdi
+    mov     r11, rsi
     and     r10, 7
     and     r11, 7
     cmp     r10, r11
     je      .align
 
 .unaligned_copy:
-    mov     r10b, [rcx]
+    mov     r10b, [rdi]
     test    r10b, r10b
     jz      .done
 
-    mov     r10b, [rdx]
+    mov     r10b, [rsi]
     test    r10b, r10b
     jz      .done
 
-    mov     [rcx], r10b
+    mov     [rdi], r10b
 
-    inc     rcx
-    inc     rdx
+    inc     rdi
+    inc     rsi
     jmp     .unaligned_copy
 
 .align:
-    test    rcx, 7
+    test    rdi, 7
     jz      .aligned_copy
 
-    mov     r10b, [rcx]
+    mov     r10b, [rdi]
     test    r10b, r10b
     jz      .done
 
-    mov     r10b, [rdx]
+    mov     r10b, [rsi]
     test    r10b, r10b
     jz      .done
     
-    mov     [rcx], r10b
+    mov     [rdi], r10b
 
-    inc     rcx
-    inc     rdx
+    inc     rdi
+    inc     rsi
     jmp     .align
 
 .aligned_copy:
-    mov     r10, [rdx]             
+    mov     r10, [rsi]             
     mov     r11, r10
     sub     r11, r12
     not     r10                    
@@ -62,11 +62,11 @@ asm_kstrcpy:
     and     r10, r13
     jnz     .unaligned_copy
 
-    mov     r10, [rdx]
-    mov     [rcx], r10
+    mov     r10, [rsi]
+    mov     [rdi], r10
 
-    add     rcx, 8
-    add     rdx, 8
+    add     rdi, 8
+    add     rsi, 8
     jb      .unaligned_copy
 
 .done:

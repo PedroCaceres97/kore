@@ -2,10 +2,7 @@
 
 #ifdef KORE_OS_WINDOWS
 
-#include <kore/sys_null.h>
-
-#include <stdio.h>
-#include <string.h>
+#include "kore_sys.h"
 
 #include <windows.h>
 #include <direct.h>
@@ -21,6 +18,7 @@ HANDLE handle_stderr = NULL;
 u8 (*sys_init)() = win32_init;
 u8 (*sys_terminate)() = win32_terminate;
 
+void win32_kread(char* buffer, size_t count);
 void win32_kignore();
 void win32_kwrite(const char* buffer, size_t count);
 void win32_kerror(const char* buffer);
@@ -65,6 +63,7 @@ u8 win32_init() {
         return false;
     }
 
+    kread                       = win32_kread;
     kignore                     = win32_kignore;              
     kwrite                      = win32_kwrite;    
     kerror                      = win32_kerror;     
@@ -90,6 +89,7 @@ u8 win32_terminate() {
         value = false;
     }
 
+    kread                       = null_kread;
     kignore                     = null_kignore;              
     kwrite                      = null_kwrite;    
     kerror                      = null_kerror;     
@@ -109,15 +109,38 @@ u8 win32_terminate() {
 }
 
 void win32_kignore() {
-    FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+#if defined(KORE_USE_STD) || defined(KORE_SYS_USE_STD)
+    char c = getc();
+    while(c != '\n' && c != EOF) {
+        c = getc();
+    }
+#else
+    char c;
+    win32_kread(&c, 1);
+    FlushConsoleInputBuffer(handle_stdin);
+#endif
+}
+void win32_kread(char* buffer, size_t count) {
+    DWORD readed;
+    ReadFile(handle_stdin, buffer, count, &readed, NULL);
 }
 void win32_kwrite(const char* buffer, size_t count) {
+#if defined(KORE_USE_STD) || defined(KORE_SYS_USE_STD)
+    const char temp[count] = {0};
+    snprintf(temp, count, "%s", buffer);
+    fprintf(stdout, temp);
+#else
     DWORD writen; 
     WriteFile(handle_stdout, buffer, count, &writen, NULL);
+#endif
 }
 void win32_kerror(const char* buffer) {
+#if defined(KORE_USE_STD) || defined(KORE_SYS_USE_STD)
+    fprintf(stderr, buffer);
+#else
     DWORD writen; 
-    WriteFile(handle_stdout, buffer, strlen(buffer), &writen, NULL);
+    WriteFile(handle_stderr, buffer, __sys_strlen__(buffer), &writen, NULL);
+#endif
 }
 
 u8 win32_kore_is_dir(const char* path) {
@@ -129,13 +152,12 @@ u8 win32_kore_is_dir(const char* path) {
     return attrib != INVALID_FILE_ATTRIBUTES && attrib & FILE_ATTRIBUTE_DIRECTORY;
 }
 u8 win32_kore_is_file(const char* path, const char* file) {
-    if (!kore_is_dir(path)) {
+    if (!win32_kore_is_dir(path)) {
         return false;
     }
     
     const u16 sizepath = 512;
-    char buffer[sizepath];
-    memset(buffer, 0, sizepath);
+    char buffer[sizepath] = {0};
 
     if (!(*path)) {
         snprintf(buffer, sizepath, "./*.*");
@@ -151,7 +173,7 @@ u8 win32_kore_is_file(const char* path, const char* file) {
     hFind = FindFirstFile(buffer, &ffd);
     if (hFind != INVALID_HANDLE_VALUE) {
         do {
-            if (strcmp(ffd.cFileName, file) == 0) {
+            if (__sys_strcmp__(ffd.cFileName, file)) {
                 found = true;
                 break;
             } 
@@ -162,21 +184,21 @@ u8 win32_kore_is_file(const char* path, const char* file) {
     return found;
 }
 u8 win32_kore_make_dir(const char* path) {
-    if (kore_is_dir(path)) {
+    if (win32_kore_is_dir(path)) {
         return true;
     }
 
     return _mkdir(path) == 0;
 }
 u8 win32_kore_make_path(const char* path) {
-    char* buffer = strdup(path);
-    size_t length = strlen(path);
+    char* buffer = __sys_strdup__(path);
+    size_t length = __sys_strlen__(path);
 
     for (size_t i = 0; i < length; i++) {
         if (buffer[i] == '/' || buffer[i] == '\\') {
             buffer[i] = '\0';
 
-            if (!kore_make_dir(buffer)) {
+            if (!win32_kore_make_dir(buffer)) {
                 free(buffer);
                 return false;
             }
@@ -185,33 +207,33 @@ u8 win32_kore_make_path(const char* path) {
         }
     }
 
-    u8 created = kore_make_dir(buffer);
+    u8 created = win32_kore_make_dir(buffer);
     free(buffer);
     return created;
 }
 
 void win32_kore_console_clear() {
     const char* buffer = "\x1b[2J\x1b[0;0H"; 
-    kwrite(buffer, strlen(buffer));
+    win32_kwrite(buffer, __sys_strlen__(buffer));
 }
 void win32_kore_console_reset() {
     const char* buffer = "\x1b[0m"; 
-    kwrite(buffer, strlen(buffer));
+    win32_kwrite(buffer, __sys_strlen__(buffer));
 }
 void win32_kore_console_set_color(KOREcolor fg, KOREcolor bg) {
     char buffer[256] = {0};
     sprintf(buffer, "\x1b[%u;%um", (fg & 0x7f) + 30 + (60 * !!(fg & 0x80)), (bg & 0x7f) + 40 + (60 * !!(bg & 0x80)));
-    kwrite(buffer, strlen(buffer));
+    win32_kwrite(buffer, __sys_strlen__(buffer));
 }
 void win32_kore_console_set_foreground(KOREcolor fg) {
     char buffer[256] = {0};
     sprintf(buffer, "\x1b[%um", (fg & 0x7f) + 30 + (60 * !!(fg & 0x80)));
-    kwrite(buffer, strlen(buffer));
+    win32_kwrite(buffer, __sys_strlen__(buffer));
 }
 void win32_kore_console_set_background(KOREcolor bg) {
     char buffer[256] = {0};
     sprintf(buffer, "\x1b[%um", (bg & 0x7f) + 40 + (60 * !!(bg & 0x80)));
-    kwrite(buffer, strlen(buffer));
+    win32_kwrite(buffer, __sys_strlen__(buffer));
 }
 
 #endif

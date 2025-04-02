@@ -2,13 +2,13 @@
 ; Microsoft x64 Calling Convention
 
 section .text
-global asm_kmemset
+global kmemset
 
-; rax = (return)    void
-; rcx = (1st)       const char*     dst
-; dl  = (2nd)       unsigned char   value
-; r8  = (3rd)       size_t          count
-asm_kmemset:
+; rax = (return) void
+; rcx =    (1st) const char*    dst
+; dl  =    (2nd) unsigned char  value
+; r8  =    (3rd) size_t         count
+kmemset:
     test    r8, r8
     jz      .done
 

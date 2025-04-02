@@ -13,20 +13,19 @@
 extern "C" {
 #endif
 
-extern u8 kmemcmp(const void* src, const void* dst, size_t count);
-extern void kmemcpy(const void* src, const void* dst, size_t count);
-extern void kmemset(const void* src, unsigned char value, size_t count);
+u8 kmemcmp(const void* src, const void* dst, size_t count);
+void kmemcpy(void* dst, const void* src, size_t count);
+void kmemset(void* dst, unsigned char value, size_t count);
+void kmemzro(void* dst, size_t count);
 
-extern u8 kstrcmp(const char* src, const char* dst);
-extern u8 kstrncmp(const char* src, const char* dst, size_t count);
+u8 kstrcmp(const char* src, const char* dst);
+u8 kstrncmp(const char* src, const char* dst, size_t count);
 
-extern void kstrcpy(const char* src, const char* dst);
-extern void kstrncpy(const char* src, const char* dst, size_t count);
+void kstrcpy(char* dst, const char* src);
+void kstrncpy(char* dst, const char* src, size_t count);
 
-extern size_t kstrlen(const char* src);
-extern size_t kstrnlen(const char* src, size_t count);
-
-void kzero(const char* src, size_t count);
+size_t kstrlen(const char* src);
+size_t kstrnlen(const char* src, size_t count);
 
 char* kstrdup(const char* src);
 char* kstrndup(const char* src, size_t count);

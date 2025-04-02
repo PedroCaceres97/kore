@@ -1,68 +1,68 @@
 ; Architecture: x86_64
-; Microsoft x64 Calling Convention
+; System V AMD64 Calling Convention
 
 section .text
 global asm_kmemcmp
 
 ; rax = (return)    bool
-; rcx = (1st)       const char*     src
-; rdx = (2nd)       const char*     dst
-; r8  = (3rd)       size_t          count
+; rdi = (1st)       const char*     src
+; rsi = (2nd)       const char*     dst
+; rdx = (3rd)       size_t          count
 asm_kmemcmp:
-    cmp     r8, 0
+    cmp     rdx, 0
     je      .equal
 
-    cmp     r8, 8
+    cmp     rdx, 8
     jb      .unaligned_compare
 
-    mov     r10, rcx
-    mov     r11, rdx
+    mov     r10, rdi
+    mov     r11, rsi
     and     r10, 7
     and     r11, 7
     cmp     r10, r11
     je      .align
 
 .unaligned_compare:
-    mov     r10b, [rcx]
-    mov     r11b, [rdx]
+    mov     r10b, [rdi]
+    mov     r11b, [rsi]
     cmp     r10b, r11b
     jne     .nequal
 
-    dec     r8
+    dec     rdx
     jz      .equal
 
-    inc     rcx
-    inc     rdx
+    inc     rdi
+    inc     rsi
     jmp     .unaligned_compare
 
 .align:
-    test    rcx, 7
+    test    rdi, 7
     jz      .aligned_compare
 
-    mov     r10b, [rcx]
-    mov     r11b, [rdx]
+    mov     r10b, [rdi]
+    mov     r11b, [rsi]
     cmp     r10b, r11b
     jne     .nequal
 
-    dec     r8
+    dec     rdx
     jz      .equal
 
-    inc     rcx
-    inc     rdx
+    inc     rdi
+    inc     rsi
     jmp     .align
 
 .aligned_compare:
-    mov     r10, [rcx]
-    mov     r11, [rdx]
+    mov     r10, [rdi]
+    mov     r11, [rsi]
     cmp     r10, r11
     jne     .nequal
 
-    add     rcx, 8
-    add     rdx, 8
-    sub     r8, 8
+    add     rdi, 8
+    add     rsi, 8
+    sub     rdx, 8
     jz      .equal
 
-    cmp     r8, 8
+    cmp     rdx, 8
     jb      .unaligned_compare
     jmp     .aligned_compare
 

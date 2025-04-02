@@ -1,12 +1,30 @@
-#ifndef _KORELIB_SYSTEM_NULL_H
-#define _KORELIB_SYSTEM_NULL_H
+#ifndef KORELIB_KORE_SYS_H
+#define KORELIB_KORE_SYS_H
 
 #include <kore/types.h>
+#include <stdio.h>
+
+#ifdef KORE_SYS_USE_STD
+
+#include <string.h>
+#define __sys_strlen__(string) strlen(string)
+#define __sys_strdup__(string) strdup(string)
+#define __sys_strcmp__(src, dst) strcmp(src, dst) == 0
+
+#else
+
+#include <kore/string.h>
+#define __sys_strlen__(string) kstrlen(string)
+#define __sys_strdup__(string) kstrdup(string)
+#define __sys_strcmp__(src, dst) kstrcmp(src, dst)
+
+#endif // KORE_SYS_USE_STD
 
 #ifdef KORE_CPP
 extern "C" {
 #endif
 
+void null_kread(char* buffer, size_t count);
 void null_kignore();
 void null_kwrite(const char* buffer, size_t count);
 void null_kerror(const char* buffer);
@@ -26,4 +44,4 @@ void null_kore_console_set_background(KOREcolor bg);
 }
 #endif
 
-#endif // _KORELIB_SYSTEM_NULL_H
+#endif // KORELIB_KORE_SYS_H

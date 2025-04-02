@@ -2,7 +2,7 @@
 
 #ifdef KORE_OS_LINUX
 
-#include <kore/sys_null.h>
+#include "kore_sys.h"
 
 #include <unistd.h>
 #include <dirent.h>
@@ -16,6 +16,7 @@ u8 (*sys_init)() = linux_init;
 u8 (*sys_terminate)() = linux_terminate;
 
 void linux_kignore();
+void linux_kread(char* buffer, size_t count);
 void linux_kwrite(const char* buffer, size_t count);
 void linux_kerror(const char* buffer);
 
@@ -35,6 +36,7 @@ static void report(const char* message) {
 }
 
 u8 linux_init() {
+    kread                       = linux_kread;
     kignore                     = linux_kignore;              
     kwrite                      = linux_kwrite;    
     kerror                      = linux_kerror;     
@@ -53,6 +55,7 @@ u8 linux_init() {
     return true;
 }
 u8 linux_terminate() {
+    kread                       = null_kread;
     kignore                     = null_kignore;              
     kwrite                      = null_kwrite;    
     kerror                      = null_kerror;     
@@ -72,13 +75,25 @@ u8 linux_terminate() {
 }
 
 void linux_kignore() {
+#if defined(KORE_USE_STD) || defined(KORE_SYS_USE_STD)
+    char c = getchar();
+    while(c != '\n' && c != EOF) {
+        c = getchar();
+    }
+#else
+    char c;
+    linux_kread(&c, 1);
     tcflush(STDIN_FILENO, TCIFLUSH);
+#endif
+}
+void linux_kread(char* buffer, size_t count) {
+    read(STDIN_FILENO, buffer, count);
 }
 void linux_kwrite(const char* buffer, size_t count) {
-    write(stdout, buffer, count);
+    write(STDOUT_FILENO, buffer, count);
 }
 void linux_kerror(const char* buffer) {
-    write(stderr, buffer, count);
+    write(STDERR_FILENO, buffer, __sys_strlen__(buffer));
 }
 
 u8 linux_kore_is_dir(const char* path) {
@@ -90,11 +105,11 @@ u8 linux_kore_is_dir(const char* path) {
     return (stat(path, &s) == 0) && (s.st_mode & S_IFDIR);
 }
 u8 linux_kore_is_file(const char* path, const char* file) {
-    if (!kore_is_dir(path)) {
+    if (!linux_kore_is_dir(path)) {
         return false;
     }
     
-    DIR* dir = NULL
+    DIR* dir = NULL;
 
     if (!(*path)) {
         dir = opendir("./");
@@ -102,11 +117,11 @@ u8 linux_kore_is_file(const char* path, const char* file) {
         dir = opendir(path);
     }
 
-    b8 found = false;
+    u8 found = false;
 
     struct dirent* entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (strcmp(entry->d_name, file) == 0) {
+        if (__sys_strcmp__(entry->d_name, file)) {
             found = true;
             break;
         }
@@ -116,21 +131,21 @@ u8 linux_kore_is_file(const char* path, const char* file) {
     return found;
 }
 u8 linux_kore_make_dir(const char* path) {
-    if (kore_is_dir(path)) {
+    if (linux_kore_is_dir(path)) {
         return true;
     }
 
     return mkdir(path, 0777) == 0;
 }
 u8 linux_kore_make_path(const char* path) {
-    char* buffer = strdup(path);
-    size_t length = strlen(path);
+    char* buffer = __sys_strdup__(path);
+    size_t length = __sys_strlen__(path);
 
     for (size_t i = 0; i < length; i++) {
         if (buffer[i] == '/' || buffer[i] == '\\') {
             buffer[i] = '\0';
 
-            if (!kore_make_dir(buffer)) {
+            if (!linux_kore_make_dir(buffer)) {
                 free(buffer);
                 return false;
             }
@@ -139,33 +154,33 @@ u8 linux_kore_make_path(const char* path) {
         }
     }
 
-    b8 result = kore_make_dir(buffer);
+    u8 result = linux_kore_make_dir(buffer);
     free(buffer);
     return result;
 }
 
 void linux_kore_console_clear() {
     const char* buffer = "\x1b[2J\x1b[0;0H"; 
-    kwrite(buffer, strlen(buffer));
+    linux_kwrite(buffer, __sys_strlen__(buffer));
 }
 void linux_kore_console_reset() {
-    const char* buffer = "\x1b[2J\x1b[0;0H"; 
-    kwrite(buffer, strlen(buffer));
+    const char* buffer = "\x1b[0m"; 
+    linux_kwrite(buffer, __sys_strlen__(buffer));
 }
 void linux_kore_console_set_color(KOREcolor fg, KOREcolor bg) {
     char buffer[256] = {0};
     sprintf(buffer, "\x1b[%u;%um", (fg & 0x7f) + 30 + (60 * !!(fg & 0x80)), (bg & 0x7f) + 40 + (60 * !!(bg & 0x80)));
-    kwrite(buffer, strlen(buffer));
+    linux_kwrite(buffer, __sys_strlen__(buffer));
 }
 void linux_kore_console_set_foreground(KOREcolor fg) {
     char buffer[256] = {0};
     sprintf(buffer, "\x1b[%um", (fg & 0x7f) + 30 + (60 * !!(fg & 0x80)));
-    kwrite(buffer, strlen(buffer));
+    linux_kwrite(buffer, __sys_strlen__(buffer));
 }
 void linux_kore_console_set_background(KOREcolor bg) {
     char buffer[256] = {0};
     sprintf(buffer, "\x1b[%um", (bg & 0x7f) + 40 + (60 * !!(bg & 0x80)));
-    kwrite(buffer, strlen(buffer));
+    linux_kwrite(buffer, __sys_strlen__(buffer));
 }
 
 #endif // kore_linux

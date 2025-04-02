@@ -33,11 +33,11 @@ static void ptr_free(kore_ptr ptr) {
 }
 static kore_ptr ptr_alloc(size_t size) {
     size_t* ptr = calloc(size + sizeof(size_t), 1);
-    *ptr = size + sizeof(size_t);
+    *ptr = size;
     return ptr_start(ptr);
 }
 static kore_ptr ptr_realloc(kore_ptr ptr, size_t size) {
-    ptr_set_size(ptr, size + sizeof(size_t));
+    ptr_set_size(ptr, size);
     return ptr_start(realloc(ptr_base(ptr), size + sizeof(size_t)));
 }
 
@@ -51,6 +51,7 @@ kore_ptr kore_alloc(size_t size) {
     return ptr;
 }
 kore_ptr kore_realloc(kore_ptr ptr, size_t size) {
+    kore_layout -= ptr_get_size(ptr);
     kore_ptr new = ptr_realloc(ptr, size);
     kore_layout += ptr_get_size(new);
     return new;
@@ -80,23 +81,19 @@ void kore_memory_free(kore_ptr ptr, u8 layout) {
     if (!layouts[layout].registered) {
         kerror("[KORE MEMORY]: Unable to free memory in an unregistered layout");
     }
-    size_t* ptr64 = (size_t*)ptr_base(ptr);
-    layouts[layout].size -= ptr64[0];
-    free(ptr64);
+    layouts[layout].size -= ptr_get_size(ptr);
+    ptr_free(ptr);
 }
 kore_ptr kore_memory_alloc(size_t size, u8 layout) {
     if (!layouts[layout].registered) {
         kerror("[KORE MEMORY]: Unable to allocate memory in an unregistered layout");
     }
-
-    size += sizeof(size_t);
-    layouts[layout].size += size;
-
-    size_t* ptr = calloc(sizeof(u8), size);
-    *ptr = size;
-    return ptr_start((u8*)ptr);
+    kore_ptr ptr = ptr_alloc(size);
+    layouts[layout].size += ptr_get_size(ptr);
+    return ptr;
 }
 kore_ptr kore_memory_realloc(kore_ptr ptr, size_t size, u8 layout) {
+    layouts[layout].size -= ptr_get_size(ptr);
     kore_ptr new = ptr_realloc(ptr, size);
     layouts[layout].size += ptr_get_size(new);
     return new;
@@ -144,7 +141,7 @@ void kore_memory_print() {
         size = kore_layout;
         sufix = "B";
     }
-    kprintf_color(foreground, background, "[KORE]: %.2f %s\n", size, sufix);
+    kprintf_color(foreground, background, "[KORE]: %.2f %s\n\n", size, sufix);
 }
 size_t kore_memory_leak() {
     size_t size = 0;

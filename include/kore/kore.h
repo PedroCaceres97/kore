@@ -10,12 +10,18 @@ extern "C" {
 u8 kore_init();
 u8 kore_terminate();
 
+extern void (*kread)(char* buffer, size_t count);
 extern void (*kignore)();
 
 extern void (*kwrite)(const char* buffer, size_t count);
 void kwrite_color(const char* buffer, size_t count, KOREcolor fg, KOREcolor bg);
 void kwrite_foreground(const char* buffer, size_t count, KOREcolor fg);
 void kwrite_background(const char* buffer, size_t count, KOREcolor bg);
+
+extern void (*kerror)(const char* buffer);
+void kerror_color(const char* buffer, KOREcolor fg, KOREcolor bg);
+void kerror_foreground(const char* buffer, KOREcolor fg);
+void kerror_background(const char* buffer, KOREcolor bg);
 
 void kprint(const char* buffer);
 void kprint_color(const char* buffer, KOREcolor fg, KOREcolor bg);
@@ -32,10 +38,10 @@ void kprintf_color(KOREcolor fg, KOREcolor bg, const char* format, ...);
 void kprintf_foreground(KOREcolor fg, const char* format, ...);
 void kprintf_background(KOREcolor bg, const char* format, ...);
 
-extern void (*kerror)(const char* buffer);
-void kerror_color(const char* buffer, KOREcolor fg, KOREcolor bg);
-void kerror_foreground(const char* buffer, KOREcolor fg);
-void kerror_background(const char* buffer, KOREcolor bg);
+void kverrorf(const char* format, va_list args);
+void kverrorf_color(KOREcolor fg, KOREcolor bg, const char* format, va_list args);
+void kverrorf_foreground(KOREcolor fg, const char* format, va_list args);
+void kverrorf_background(KOREcolor bg, const char* format, va_list args);
 
 void kerrorf(const char* format, ...);
 void kerrorf_color(KOREcolor fg, KOREcolor bg, const char* format, ...);

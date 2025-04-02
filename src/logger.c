@@ -20,7 +20,7 @@ static KORElevel levels[6] = {
 void klog(const char* format, ...) {
     va_list args;
     va_start(args, format);
-    kvprintf("\n[KORE]: %s\n", args);
+    kvprintf("\n [KORE]: %s\n", args);
     va_end(args);
 }
 

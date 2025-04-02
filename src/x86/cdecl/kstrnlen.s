@@ -2,25 +2,35 @@
 ; Microsoft x64 Calling Convention
 
 section .text
-global asm_kstrlen
+global kstrnlen
 
-; rax = (return)    size_t
-; rcx = (1st)       const char* src
+; rax = (return) size_t
+; rcx =    (1st) const char*    src
+; rdx =    (2nd) size_t         count
 
-asm_kstrlen:        
+kstrnlen:        
     push    r12
     push    r13
     mov     r12, 0x0101010101010101
     mov     r13, 0x8080808080808080
-    
+
     mov     rax, rcx
+
+    test    rdx, rdx
+    jz      .done    
+
+    cmp     rdx, 8
+    jb      .unaligned_loop
 
 .align:
     test    rcx, 7              
-    jz      .aligned_loop               
+    jz      .aligned_loop           
 
     mov     r10b, [rcx]           
     test    r10b, r10b              
+    jz      .done
+
+    dec     rdx
     jz      .done
 
     inc     rcx
@@ -28,7 +38,7 @@ asm_kstrlen:
 
 .aligned_loop:
     mov     r10, [rcx]             
-    mov     r11, r10 
+    mov     r11, r10
     sub     r11, r12
     not     r10                    
     and     r10, r11                
@@ -36,14 +46,22 @@ asm_kstrlen:
     jnz     .unaligned_loop
 
     add     rcx, 8
-    jmp     .aligned_loop
-
-.unaligned_loop:
-    mov     r10b, [rcx]
-    test    r10b, r10b        
+    sub     rdx, 8
     jz      .done
 
-    inc     rcx      
+    cmp     rdx, 8
+    jb      .unaligned_loop
+    jmp     .aligned_loop 
+
+.unaligned_loop:
+    mov     r10b, [rcx]           
+    test    r10b, r10b              
+    jz      .done
+
+    dec     rdx
+    jz      .done
+
+    inc     rcx
     jmp     .unaligned_loop
 
 .done:

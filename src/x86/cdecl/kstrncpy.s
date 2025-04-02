@@ -2,16 +2,23 @@
 ; Microsoft x64 Calling Convention
 
 section .text
-global asm_kstrcpy
+global kstrncpy
 
-; rax = (return)    void
-; rcx = (1st)       char*           dst
-; rdx = (2nd)       const char*     src
-asm_kstrcpy:
+; rax = (return) void
+; rcx =    (1st) const char*    dst
+; rdx =    (2nd) const char*    src
+; r8  =    (3rd) size_t         count
+kstrncpy:
     push    r12
     push    r13
     mov     r12, 0x0101010101010101
     mov     r13, 0x8080808080808080
+
+    test    r8, r8
+    jz      .done
+
+    cmp     r8, 8
+    jb      .unaligned_copy
 
     mov     r10, rcx
     mov     r11, rdx
@@ -33,6 +40,9 @@ asm_kstrcpy:
 
     inc     rcx
     inc     rdx
+
+    dec     r8
+    jz      .done
     jmp     .unaligned_copy
 
 .align:
@@ -51,6 +61,9 @@ asm_kstrcpy:
 
     inc     rcx
     inc     rdx
+
+    dec     r8
+    jz      .done
     jmp     .align
 
 .aligned_copy:
@@ -67,6 +80,10 @@ asm_kstrcpy:
 
     add     rcx, 8
     add     rdx, 8
+    sub     r8, 8
+    jz      .done
+
+    cmp     r8, 8
     jb      .unaligned_copy
 
 .done:

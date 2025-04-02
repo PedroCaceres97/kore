@@ -1,92 +1,88 @@
 ; Architecture: x86_64
-; System V AMD64 ABI (Unix-like Systems)
+; System V AMD64 Calling Convention
 
 section .text
-global kstrcmp
+global asm_kstrcmp
 
-kstrcmp:
-    xor     rax, rax        ; rax = 0
-    mov     r8, rdi         ; r8 = rdi
-    mov     r9, rsi         ; r9 = rsi
-    and     r8, 7           ; r8 = r8 % 8
-    and     r9, 7           ; r9 = r9 % 8
-    cmp     r8, r9      
-    je      .align_loop     ; if r8 == r9 
+; rax = (return)    bool
+; rdi = (1st)       const char*     src
+; rsi = (2nd)       const char*     dst
+asm_kstrcmp:
+    push    r12
+    push    r13
+    mov     r12, 0x0101010101010101
+    mov     r13, 0x8080808080808080
 
-.unaligned_loop:
-    mov     r8b, [rdi]      ; r8b = *rdi
-    mov     r9b, [rsi]      ; r9b = *rsi
-    cmp     r8b, r9b    
-    jne     .nequal         ; if r8b != r9b
+    mov     r10, rdi         
+    mov     r11, rsi         
+    and     r10, 7           
+    and     r11, 7           
+    cmp     r10, r11      
+    je      .align
 
-    test    r8b, r8b    
-    jz      .equal          ; if r8b == 0
+.unaligned_compare:
+    mov     r10, [rdi]
+    mov     r11, [rsi]
+    cmp     r10, r11
+    jne     .nequal
 
-    inc     rdi             ; rdi++
-    inc     rsi             ; rsi++
-    jmp     .unaligned_loop
+    test    r10, r10
+    jz      .equal
 
-.align_loop:
-    test    rdi, 7      
-    jz      .aligned_loop   ; if rdi % 8 == 0
+    inc     rdi
+    inc     rsi
+    jmp     .unaligned_compare
 
-    mov     r8b, [rdi]      ; r8b = *rdi
-    mov     r9b, [rsi]      ; r9b = *rsi
-    cmp     r8b, r9b    
-    jne     .nequal         ; if r8b != r9b
+.align:
+    test    rdi, 7
+    jz      .aligned_compare
 
-    test    r8b, r8b        
-    jz      .equal          ; if r8b == 0
+    mov     r10, [rdi]
+    mov     r11, [rsi]
+    cmp     r10, r11
+    jne     .nequal
 
-    inc     rdi             ; rdi++
-    inc     rsi             ; rsi++
-    jmp     .align_loop
+    test    r10, r10
+    jz      .equal
 
-.aligned_loop:
-    mov     r8, [rdi]       ; r8 = *rdi
-    mov     r9, [rsi]       ; r9 = *rdi
+    inc     rdi
+    inc     rsi
+    jmp     .align
 
-    mov     r10, r8         ; r10 = r8
+.aligned_compare:
+    mov     r10, [rdi]             
     mov     r11, r10
-    sub     r11, 0x0101010101010101
+    sub     r11, r12
     not     r10                    
     and     r10, r11                
-    and     r10, 0x8080808080808080
-    jnz     .byte_loop      ; if any 0 in r8 compare byte to byte
+    and     r10, r13
+    jnz     .unaligned_compare
 
-    mov     r10, r9
+    mov     r10, [rsi]             
     mov     r11, r10
-    sub     r11, 0x0101010101010101
+    sub     r11, r12
     not     r10                    
     and     r10, r11                
-    and     r10, 0x8080808080808080
-    jnz     .byte_loop      ; if any 0 in r9 compare byte to byte
+    and     r10, r13
+    jnz     .unaligned_compare
 
-    cmp     r8, r9      
-    jne     .nequal         ; if r8 != r9
+    mov     r10, [rdi]
+    mov     r11, [rsi]
+    cmp     r10, r11
+    jne     .nequal
 
-    add     rdi, 8          ; rdi += 8
-    add     rsi, 8          ; rsi += 8 
-    jmp     .aligned_loop
-
-.byte_loop:
-    mov     r8b, [rdi]      ; r8b = *rdi
-    mov     r9b, [rsi]      ; r9b = *rsi
-    cmp     r8b, r9b        ; if r8b != r9b
-    jne     .nequal         
-
-    test    r8b, r8b
-    jz      .equal          ; if r8b == 0
-
-    inc     rdi             ; rdi++
-    inc     rsi             ; rsi++
-    test    rdi, 7  
-    jnz     .byte_loop      ; if rdi % 8 != 0
+    add     rdi, 8
+    add     rsi, 8
+    jmp     .aligned_compare
 
 .equal:
-    mov eax, 1
-    ret
+    mov     rax, 1
+    jmp     .done
 
 .nequal:
-    mov eax, 0
+    mov     rax, 0
+
+.done:
+    pop r13
+    pop r12
     ret
